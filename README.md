@@ -34,6 +34,6 @@ chmod 0755 runit-service.sh
 
 Move it to a `bin` folder. Preferably along runit scripts:
 ```shell
-mv runit-service.sh /usr/bin/runit-service
+cp runit-service.sh /usr/bin/runit-service
 ```
 
