@@ -68,6 +68,11 @@ case "$1" in
         shift
         ;;
       disable)
+        # Cannot disable a service that is not linked
+        if [ ! -d "${RUNIT_DEFAULT_SERVICE_PATH}/$2" ]; then
+          printf "\033[31merror\033[0m: Service not linked.\n"
+          exit 1
+        fi
         # Cannot disable a service if it is already down
         if [ -f "${RUNIT_DISABLED_SERVICE}" ]; then
           printf "\033[31merror\033[0m: Service already disabled.\n"
@@ -79,6 +84,11 @@ case "$1" in
         shift
         ;;
       enable)
+        # Cannot enable a service that is not linked
+        if [ ! -d "${RUNIT_DEFAULT_SERVICE_PATH}/$2" ]; then
+          printf "\033[31merror\033[0m: Service not linked.\n"
+          exit 1
+        fi
         # Cannot enable a service if it is already up
         if [ ! -f "${RUNIT_DISABLED_SERVICE}" ]; then
           printf "\033[31merror\033[0m: Service already enabled.\n"
@@ -102,6 +112,11 @@ case "$1" in
     ;;
   enabled)
     if [ -n "$2" ] && [ "$2" != "list" ]; then
+      # Cannot check a service that is not linked
+      if [ ! -d "${RUNIT_DEFAULT_SERVICE_PATH}/$2" ]; then
+        printf "\033[31merror\033[0m: Service not linked.\n"
+        exit 1
+      fi
       if [ -f "${RUNIT_DISABLED_SERVICE}" ]; then
         printf "\033[31merror\033[0m: Service not enabled.\n"
         exit 1
