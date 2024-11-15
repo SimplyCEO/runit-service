@@ -26,7 +26,7 @@ help_function()
   printf "\trestart -  Stop and start the service.\n"
   printf "\tstop    -  Stop the service.\n"
   printf "\tpurge   -  Will stop, unlink, and remove the service permanently.\n"
-  exit 0
+  return 0
 }
 
 version_function()
@@ -34,7 +34,7 @@ version_function()
   printf "runit-service a0.1.1:\n"
   printf "\tGitHub: https://github.com/SimplyCEO/runit-service.git\n"
   printf "\tGitLab: https://gitlab.com/SimplyCEO/runit-service.git\n"
-  exit 0
+  return 0
 }
 
 OPTIONS=`getopt -o vh --long version:,help -- "$@"`
@@ -68,7 +68,6 @@ case "$1" in
         touch "${RUNIT_DISABLED_SERVICE}"
         printf "\033[32mrunit-service\033[0m: Linked service \"$2\".\n"
         exit 0
-        shift
         ;;
       disable)
         # Cannot disable a service that is not linked
@@ -84,7 +83,6 @@ case "$1" in
         touch "${RUNIT_DISABLED_SERVICE}"
         printf "\033[32mrunit-service\033[0m: Disabled service \"$2\" from boot.\n"
         exit 0
-        shift
         ;;
       enable)
         # Cannot enable a service that is not linked
@@ -100,7 +98,6 @@ case "$1" in
         rm -f "${RUNIT_DISABLED_SERVICE}"
         printf "\033[32mrunit-service\033[0m: Enabled service \"$2\" to boot.\n"
         exit 0
-        shift
         ;;
       status|start|restart|stop) sv "$1" "$2"; exit 0; shift ;;
       purge)
@@ -114,11 +111,10 @@ case "$1" in
             rm -f "${RUNIT_DEFAULT_SERVICE_PATH}/$2"
             rm -rf "${RUNIT_AVAILABLE_SERVICES}/$2"
             exit 0
-            shift
             ;;
           *) break ;;
         esac
-        shift
+        exit 1
         ;;
       *) break ;;
     esac
@@ -128,7 +124,6 @@ case "$1" in
     ls "${RUNIT_AVAILABLE_SERVICES}"
     printf "\033[0m"
     exit 0
-    shift
     ;;
   enabled)
     if [ -n "$2" ] && [ "$2" != "list" ]; then
