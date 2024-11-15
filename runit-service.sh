@@ -16,6 +16,7 @@ help_function()
   printf "\n"
   printf "Available modes:\n"
   printf "\tlist    -  List the services located at '/etc/runit/sv'.\n"
+  printf "\tunlink  -  Unlink the service from '/etc/runit/runsvdir/default'.\n"
   printf "\tlink    -  Link the service from '/etc/runit/sv' to '/etc/runit/runsvdir/default'.\n"
   printf "\tenabled -  List the enabled services located at '/etc/runit/runsvdir/default'.\n"
   printf "\tdisable -  Disable a service from activating at boot.\n"
@@ -48,13 +49,14 @@ done
 
 # Code might be messed, but intention is to put in C
 case "$1" in
-  disable|enable|link|status|start|restart|stop)
+  disable|enable|unlink|link|status|start|restart|stop)
     if [ "$(whoami)" != "root" ]; then printf "\033[31merror\033[0m: Must be root to use this command.\n"; exit 1; fi
 
     if [ -z "$2" ]; then printf "\033[31merror\033[0m: A service is needed. No service found.\n"; exit 1; fi
     if [ ! -d "${RUNIT_AVAILABLE_SERVICES}/$2" ]; then printf "\033[31merror\033[0m: No service found.\n"; exit 1; fi
 
     case "$1" in
+      unlink) rm "${RUNIT_DEFAULT_SERVICE_PATH}/$2"; exit 0 ;;
       link)
         # Cannot link an already linked service
         if [ -d "${RUNIT_DEFAULT_SERVICE_PATH}/$2" ]; then
