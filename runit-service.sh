@@ -31,7 +31,7 @@ help_function()
 
 version_function()
 {
-  printf "runit-service v0.1:\n"
+  printf "runit-service a0.1.1:\n"
   printf "\tGitHub: https://github.com/SimplyCEO/runit-service.git\n"
   printf "\tGitLab: https://gitlab.com/SimplyCEO/runit-service.git\n"
   exit 0
