@@ -25,6 +25,20 @@ Available modes:
 Installation
 ------------
 
+- C:
+
+Compile the code:
+```shell
+make BUILD_TYPE=Release
+```
+
+Give yourself `root` privileges and copy the binary to the system's binary directory:
+```shell
+cp bin/runit-service /usr/bin
+```
+
+- Shell script:
+
 Give yourself `root` privileges and run these instructions.
 
 Set mode to `rwxr-xr-x` or `0755`:
