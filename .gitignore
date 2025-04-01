@@ -1,5 +1,10 @@
-# Build files
+# master tar ball
+/*.tar.gz
 
-/.obj
-/bin
+# arch makepkg system
+/pkg
+/src
+
+# binary
+/*.tar.zst
 
