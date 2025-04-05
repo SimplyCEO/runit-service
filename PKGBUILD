@@ -2,7 +2,7 @@
 
 pkgname=runit-service
 pkgdesc="A custom tool to manage runit services."
-pkgver=a0.2.0
+pkgver=a0.2.1
 pkgrel=1
 replaces=('runit-service')
 arch=('x86_64' 'i686' 'aarch64' 'armv7h')
@@ -11,7 +11,7 @@ license=('GPL-2.0-or-later')
 depends=('make' 'runit')
 optdepends=('gcc' 'clang' 'tcc')
 source=("${pkgname}-${pkgver}.tar.gz::https://gitlab.com/SimplyCEO/runit-service/-/archive/master/runit-service-master.tar.gz")
-sha256sums=('c274aae3e138facaea5ad46f152f1a1904941e27511d940968eb466b7e1f55e2')
+sha256sums=('c5dc8c4a72fdb711fbd60a1997ea6bf1b896853607cea921a180403aa7abedc4')
 
 build()
 {
@@ -25,6 +25,7 @@ package()
   cd "${srcdir}/${pkgname}-master"
 
   install -Dm755 bin/${pkgname} "${pkgdir}/usr/bin/${pkgname}"
+  install -Dm755 service/runit-journal/run "${pkgdir}/etc/runit/sv/runit-journal/run"
 
   make clean
 }
