@@ -45,12 +45,12 @@ manage_application(void)
   char *mode = _argv[1];
 
   /* Entrances that depend on service */
-  const char *entrances[] = {"unlink","link","disable","enable","status","start","restart","stop","purge","list","enabled"};
+  const char *entrances[] = {"unlink","link","disable","enable","status","start","restart","stop","purge","list","enabled","journal"};
   unsigned char mode_index = 0;
-  switch (mode_index = mstrncmp(mode, entrances, 11))
+  switch (mode_index = mstrncmp(mode, entrances, sizeof(entrances)))
   {
     case 0: fprintf(stderr, "%serror%s: '%s' is not a mode.\n", COLOUR_RED, COLOUR_RESET, _argv[1]); return 1;
-    case 10: case 11:
+    case 10: case 11: case 12:
     {
       switch (_argc)
       {
@@ -75,6 +75,23 @@ manage_application(void)
                     done; \
                     printf \"${SERVICES}\n\"; \
                     printf \"\033[0m\"", RUNIT_DEFAULT_SERVICE_PATH, RUNIT_DEFAULT_SERVICE_PATH);
+            } return 0;
+
+            /* application journal */
+            case 12:
+            {
+              FILE* journal = fopen("/var/log/runit-journal.log", "r");
+              if (journal == NULL)
+              {
+                fprintf(stderr, "Could not listen to kernel.\n");
+                return 1;
+              }
+
+              char message[256] = {0};
+              while (fgets(message, sizeof(message), journal) != NULL)
+              { printf("%s", message); }
+
+              fclose(journal);
             } return 0;
             default: return print_usage();
           }

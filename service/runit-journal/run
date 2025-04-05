@@ -1,0 +1,15 @@
+#!/bin/sh
+
+# Store the journal file. Case of crash.
+if [ -f /var/log/runit-journal.log ]; then
+  mv /var/log/runit-journal.log /var/log/runit-journal.log.old
+fi
+
+touch /var/log/runit-journal.log
+chmod 600 /var/log/runit-journal.log
+
+while true; do
+  cat /proc/kmsg > /var/log/runit-journal.log
+  sleep 5
+done
+

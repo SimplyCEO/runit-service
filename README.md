@@ -21,6 +21,8 @@ Available modes:
 - start: Start the service.
 - restart: Stop and start the service.
 - stop: Stop the service.
+- purge: Will stop, unlink, and remove the service permanently.
+- journal: Listen kernel logs.
 
 Installation
 ------------
@@ -32,9 +34,19 @@ Compile the code:
 make BUILD_TYPE=Release
 ```
 
-Give yourself `root` privileges and copy the binary to the system's binary directory:
+Give yourself `root` privileges.
+
+Copy the binary to the system's binary directory:
 ```shell
 cp bin/runit-service /usr/bin
+```
+
+Copy the `runit-journal` service to runit's service directory and start it:
+```shell
+cp -r service/runit-journal /etc/runit/sv
+runit-service link runit-journal
+runit-service enable runit-journal
+runit-service start runit-journal
 ```
 
 - Shell script:

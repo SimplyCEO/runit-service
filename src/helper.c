@@ -20,13 +20,15 @@ print_help(void)
           \r\tstart   -  Start the service.\n\
           \r\trestart -  Stop and start the service.\n\
           \r\tstop    -  Stop the service.\n\
-          \r\tpurge   -  Will stop, unlink, and remove the service permanently.\n", appname, appname);
+          \r\tpurge   -  Will stop, unlink, and remove the service permanently.\n\
+          \r\tjournal -  Listen kernel logs.\n\
+          \r\0", appname, appname);
 }
 
 void
 print_version(void)
 {
-  printf("%s a0.2.0:\n\
+  printf("%s a0.2.1:\n\
           \r\tGitHub: https://github.com/SimplyCEO/runit-service.git\n\
           \r\tGitLab: https://gitlab.com/SimplyCEO/runit-service.git\n", appname);
 }
