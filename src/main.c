@@ -14,7 +14,14 @@ int _argc = 0; char **_argv = NULL;
 static void
 set_appname(const char *name)
 {
-  appname = (char*)name;
+  const char* posix_separator = strrchr(name, '/');
+  const char* dos_separator = strrchr(name, '\\');
+  const char* separator = (posix_separator > dos_separator) ? posix_separator : dos_separator;
+
+  if (separator == NULL)
+  { appname = (char*)name; }
+  else
+  { appname = (char*)(separator+1); }
 }
 
 static void
