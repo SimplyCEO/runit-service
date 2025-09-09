@@ -9,7 +9,6 @@
 #include "system.h"
 
 char *appname = NULL;
-int _argc = 0; char **_argv = NULL;
 
 static void
 set_appname(const char *name)
@@ -24,18 +23,11 @@ set_appname(const char *name)
   { appname = (char*)(separator+1); }
 }
 
-static void
-set_parameters(int argc, char *argv[])
-{
-  _argc = argc;
-  _argv = argv;
-}
-
 static int
-manage_application(void)
+manage_application(int argc, char *argv[])
 {
   int opt = 0;
-  while ((opt = getopt(_argc, _argv, ":hv")) != -1)
+  while ((opt = getopt(argc, argv, ":hv")) != -1)
   {
     switch (opt)
     {
@@ -47,19 +39,19 @@ manage_application(void)
   }
 
   /* appname only lead to help */
-  switch (_argc)
+  switch (argc)
   { case 0: case 1: return print_usage(); default: break; }
-  char *mode = _argv[1];
+  char *mode = argv[1];
 
   /* Entrances that depend on service */
   const char *entrances[] = {"unlink","link","disable","enable","status","start","restart","stop","purge","list","enabled","journal"};
   unsigned char mode_index = 0;
   switch (mode_index = mstrncmp(mode, entrances, sizeof(entrances)))
   {
-    case 0: fprintf(stderr, "%serror%s: '%s' is not a mode.\n", COLOUR_RED, COLOUR_RESET, _argv[1]); return 1;
+    case 0: fprintf(stderr, "%serror%s: '%s' is not a mode.\n", COLOUR_RED, COLOUR_RESET, argv[1]); return 1;
     case 10: case 11: case 12:
     {
-      switch (_argc)
+      switch (argc)
       {
         case 0: case 1: case 2:
         {
@@ -112,10 +104,10 @@ manage_application(void)
       switch (geteuid())
       { case 0: break; default: fprintf(stderr, "%serror%s: Must be root to use this command.\n", COLOUR_RED, COLOUR_RESET); return 1; }
 
-      switch (_argc)
+      switch (argc)
       { case 0: case 1: case 2: fprintf(stderr, "%serror%s: A service is needed. No service found.\n", COLOUR_RED, COLOUR_RESET); return 1; default: break; }
 
-      char *service = _argv[2];
+      char *service = argv[2];
 
       switch (ifdir("%s/%s", RUNIT_AVAILABLE_SERVICES, service))
       { case 0: fprintf(stderr, "%serror%s: No service found.\n", COLOUR_RED, COLOUR_RESET); return 1; default: break; }
@@ -211,8 +203,7 @@ manage_application(void)
 int
 main(int argc, char *argv[])
 {
-  set_parameters(argc, argv);
-  set_appname(_argv[0]);
-  return manage_application();
+  set_appname(argv[0]);
+  return manage_application(argc, argv);
 }
 
