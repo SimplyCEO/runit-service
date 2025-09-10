@@ -3,68 +3,60 @@
 #include <string.h>
 #include <sys/stat.h>
 
-unsigned char
-mstrncmp(const char *target, const char *entrances[], unsigned char c)
+#include "toolbox.h"
+
+char*
+strformat(const char* format, ...)
 {
-  unsigned char i = 0;
-  for (i=0; i<c; i++)
+  va_list args;
+  va_start(args, format);
+
+  static char str[1024] = {0};
+  vsprintf(str, format, args);
+  va_end(args);
+
+  return str;
+}
+
+uint8_t
+mstrncmp(const char* target, const char* entrances[], uint8_t c)
+{
+  uint8_t i = 0; for (; i<c; i++)
   {
-    switch (strncmp(target, entrances[i], 8))
-    {
-      case 0: return i+1;
-      default: break;
-    }
+    if (strncmp(target, entrances[i], 8) == 0)
+    { return i+1; }
   }
   return 0;
 }
 
-unsigned char
-iffile(const char *format, ...)
+bool
+iffile(const char* path)
 {
-  va_list args;
-  va_start(args, format);
-
-  char path[1024] = {0};
-  vsprintf(path, format, args);
-  va_end(args);
-
   FILE *stream = fopen(path, "rb");
   if (stream == NULL)
-  { return 0; }
+  { return true; }
   fclose(stream);
 
-  return 1;
+  return false;
 }
 
-unsigned char
-ifdir(const char *format, ...)
+bool
+ifdir(const char* path)
 {
-  va_list args;
-  va_start(args, format);
-
-  char path[1024] = {0};
-  vsprintf(path, format, args);
-  va_end(args);
-
   struct stat statbuf;
   if (stat(path, &statbuf) != 0)
-  { return 0; }
-  return S_ISDIR(statbuf.st_mode);
+  { return true; }
+
+  return ((S_ISDIR(statbuf.st_mode) == 0) ? true : false);
 }
 
-unsigned char
-ifsymlink(const char *format, ...)
+bool
+ifsymlink(const char* path)
 {
-  va_list args;
-  va_start(args, format);
-
-  char path[1024] = {0};
-  vsprintf(path, format, args);
-  va_end(args);
-
   struct stat statbuf;
   if (lstat(path, &statbuf) < 0)
-  { return 1; }
-  return S_ISLNK(statbuf.st_mode);
+  { return false; }
+
+  return ((S_ISLNK(statbuf.st_mode) == 0) ? true : false);
 }
 

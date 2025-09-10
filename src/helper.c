@@ -34,7 +34,7 @@ print_version(void)
   );
 }
 
-unsigned char
+bool
 print_usage(void)
 {
   fprintf(stderr, "Usage: %s <mode> <service>\nMore info: -h.\n", appname);

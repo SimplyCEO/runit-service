@@ -1,10 +1,12 @@
 #ifndef SYSTEM_HEADER
 #define SYSTEM_HEADER
 
-void exec(const char *format, ...);
-unsigned char rm(const char *format, ...);
-unsigned char touch(const char *format, ...);
-unsigned char link_service(const char *service);
+#include "types.h"
+
+void exec(const char* cmd);
+bool rm(const char* path);
+bool touch(const char* path);
+bool link_service(const char* service);
 
 #endif
 

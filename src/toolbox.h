@@ -1,10 +1,13 @@
 #ifndef TOOLBOX_HEADER
 #define TOOLBOX_HEADER
 
-unsigned char mstrncmp(const char *target, const char *entrances[], unsigned char c);
-unsigned char iffile(const char *format, ...);
-unsigned char ifdir(const char *format, ...);
-unsigned char ifsymlink(const char *format, ...);
+#include "types.h"
+
+char* strformat(const char* format, ...);
+uint8_t mstrncmp(const char* target, const char* entrances[], uint8_t c);
+bool iffile(const char* path);
+bool ifdir(const char* path);
+bool ifsymlink(const char* path);
 
 #endif
 

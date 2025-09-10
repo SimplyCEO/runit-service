@@ -23,9 +23,9 @@ ifndef CFLAGS
 	else ifeq ($(BUILD_TYPE), Debug)
 		CFLAGS += -O0 -g3 -ggdb -Wall
 	endif
-
-	CFLAGS += -Wno-typedef-redefinition
 endif
+
+CFLAGS += -Wno-typedef-redefinition
 
 ESCAPE        := \033
 RED           := $(ESCAPE)[31m

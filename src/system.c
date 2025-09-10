@@ -6,55 +6,36 @@
 
 #include "main.h"
 #include "toolbox.h"
+#include "types.h"
 
 void
-exec(const char *format, ...)
+exec(const char* cmd)
 {
-  va_list args;
-  va_start(args, format);
-
-  char cmd[1024] = {0};
-  vsprintf(cmd, format, args);
-  va_end(args);
-
   system(cmd);
 }
 
-unsigned char
-rm(const char *format, ...)
+bool
+rm(const char* path)
 {
-  va_list args;
-  va_start(args, format);
-
-  char path[1024] = {0};
-  vsprintf(path, format, args);
-  va_end(args);
-
   if ((ifdir(path) == 0) || (ifsymlink(path) != 0))
   { return remove(path); }
+
   return rmdir(path);
 }
 
-unsigned char
-touch(const char *format, ...)
+bool
+touch(const char* path)
 {
-  va_list args;
-  va_start(args, format);
-
-  char path[1024] = {0};
-  vsprintf(path, format, args);
-  va_end(args);
-
   FILE *stream = fopen(path, "wb");
   if (stream == NULL)
-  { return 0; }
+  { return false; }
   fclose(stream);
 
-  return 1;
+  return true;
 }
 
-unsigned char
-link_service(const char *service)
+bool
+link_service(const char* service)
 {
   char src[1024] = {0}, dest[1024] = {0};
 

@@ -5,7 +5,7 @@
 
 void print_help(void);
 void print_version(void);
-unsigned char print_usage(void);
+bool print_usage(void);
 
 #endif
 

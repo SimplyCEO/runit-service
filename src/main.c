@@ -2,7 +2,6 @@
 #include <unistd.h>
 #include <string.h>
 
-#include "types.h"
 #include "main.h"
 #include "helper.h"
 #include "toolbox.h"
@@ -34,167 +33,142 @@ manage_application(int argc, char *argv[])
       case 'h': print_help(); return 0;
       case 'v': print_version(); return 0;
       case '?': return print_usage();
-      default: break;;
+      default: break;
     }
   }
 
   /* appname only lead to help */
-  switch (argc)
-  { case 0: case 1: return print_usage(); default: break; }
-  char *mode = argv[1];
+  if (argc < 2)
+  { return print_usage(); }
+
+  /* TODO: Parse one service at time, if multiple. */
+  if (argc > 3)
+  { errprintf("More than one service given."); return 1; }
 
   /* Entrances that depend on service */
-  const char *entrances[] = {"unlink","link","disable","enable","status","start","restart","stop","purge","list","enabled","journal"};
-  unsigned char mode_index = 0;
-  switch (mode_index = mstrncmp(mode, entrances, sizeof(entrances)))
+  char* service = NULL;
+  const char* mode = argv[1];
+  const char* entrances[] = {"unlink","link","disable","enable","status","start","restart","stop","purge","list","enabled","journal"};
+  service_mode mIndex = mstrncmp(mode, entrances, 12);
+
+  switch (mIndex)
   {
-    case 0: fprintf(stderr, "%serror%s: '%s' is not a mode.\n", COLOUR_RED, COLOUR_RESET, argv[1]); return 1;
-    case 10: case 11: case 12:
+    case MODE_NONE:
     {
-      switch (argc)
-      {
-        case 0: case 1: case 2:
-        {
-          switch (mode_index)
-          {
-            /* application list */
-            case 10:
-            {
-              exec("ls '%s'", RUNIT_AVAILABLE_SERVICES);
-            } return 0;
-
-            /* application enabled */
-            case 11:
-            {
-              exec("printf \"\033[34m\"; \
-                    for service in $(ls '%s'); do \
-                      if [ ! -f '%s/$service/down' ]; then \
-                        SERVICES=\"${SERVICES} $service\"; \
-                      fi \
-                    done; \
-                    printf \"${SERVICES}\n\"; \
-                    printf \"\033[0m\"", RUNIT_DEFAULT_SERVICE_PATH, RUNIT_DEFAULT_SERVICE_PATH);
-            } return 0;
-
-            /* application journal */
-            case 12:
-            {
-              FILE* journal = fopen("/var/log/runit-journal.log", "r");
-              if (journal == NULL)
-              {
-                fprintf(stderr, "Could not listen to kernel.\n");
-                return 1;
-              }
-
-              char message[256] = {0};
-              while (fgets(message, sizeof(message), journal) != NULL)
-              { printf("%s", message); }
-
-              fclose(journal);
-            } return 0;
-            default: return print_usage();
-          }
-        } break;
-        default: break;
-      }
-    }
+      errprintf(strformat("'%s' is not a mode.", argv[1]));
+    } return 1;
+    case MODE_LIST:
+    case MODE_JOURNAL:
+    case MODE_ENABLED: break;
     default:
     {
+      if (argc < 3)
+      { errprintf("A service is needed. No service found."); return 1; }
+
       /* Everything here need to be run as root */
-      switch (geteuid())
-      { case 0: break; default: fprintf(stderr, "%serror%s: Must be root to use this command.\n", COLOUR_RED, COLOUR_RESET); return 1; }
+      if (geteuid() != 0)
+      { errprintf("Must be root to use this command."); return 1; }
 
-      switch (argc)
-      { case 0: case 1: case 2: fprintf(stderr, "%serror%s: A service is needed. No service found.\n", COLOUR_RED, COLOUR_RESET); return 1; default: break; }
+      if (ifdir(strformat("%s/%s", RUNIT_AVAILABLE_SERVICES, service = argv[2])) == true)
+      { errprintf("No service found."); return 1; }
+    } break;
+  }
 
-      char *service = argv[2];
+  switch (mIndex)
+  {
+    case MODE_UNLINK:
+    {
+      if (ifdir(strformat("%s/%s", RUNIT_DEFAULT_SERVICE_PATH, service)) == true)
+      { errprintf("Service already unlinked."); return 1; }
 
-      switch (ifdir("%s/%s", RUNIT_AVAILABLE_SERVICES, service))
-      { case 0: fprintf(stderr, "%serror%s: No service found.\n", COLOUR_RED, COLOUR_RESET); return 1; default: break; }
+      rm(strformat("%s/%s", RUNIT_DEFAULT_SERVICE_PATH, service));
+      printf("%s%s%s: Unlinked service \"%s\".\n", COLOUR_GREEN, appname, COLOUR_RESET, service);
+    } break;
+    case MODE_LINK:
+    {
+      if (ifdir(strformat("%s/%s", RUNIT_DEFAULT_SERVICE_PATH, service)) == false)
+      { errprintf("Service already linked."); return 1; }
 
-      switch (mode_index)
+      link_service(service);
+      touch(strformat("%s/%s/down", RUNIT_DEFAULT_SERVICE_PATH, service));
+      printf("%s%s%s: Linked service \"%s\".\n", COLOUR_GREEN, appname, COLOUR_RESET, service);
+    } break;
+    case MODE_DISABLE:
+    {
+      if (ifdir(strformat("%s/%s", RUNIT_DEFAULT_SERVICE_PATH, service)) == true)
+      { errprintf("Service not linked."); return 1; }
+      if (iffile(strformat("%s/%s/down", RUNIT_DEFAULT_SERVICE_PATH, service)) == false)
+      { errprintf("Service already disabled."); return 1; }
+
+      touch(strformat("%s/%s/down", RUNIT_DEFAULT_SERVICE_PATH, service));
+      printf("%s%s%s: Disabled service \"%s\" from boot.\n", COLOUR_GREEN, appname, COLOUR_RESET, service);
+    } break;
+    case MODE_ENABLE:
+    {
+      if (ifdir(strformat("%s/%s", RUNIT_DEFAULT_SERVICE_PATH, service)) == true)
+      { errprintf("Service not linked."); return 1; }
+      if (iffile(strformat("%s/%s/down", RUNIT_DEFAULT_SERVICE_PATH, service)) == true)
+      { errprintf("Service already enabled."); return 1; }
+
+      rm(strformat("%s/%s/down", RUNIT_DEFAULT_SERVICE_PATH, service));
+      printf("%s%s%s: Enabled service \"%s\" from boot.\n", COLOUR_GREEN, appname, COLOUR_RESET, service);
+    } break;
+    case MODE_STATUS:
+    case MODE_STOP:
+    case MODE_RESTART:
+    case MODE_START:
+    {
+      exec(strformat("sv '%s' '%s'", mode, service));
+    } break;
+    case MODE_PURGE:
+    {
+      printf("%sFAIL SAFE SECURITY%s: Are you sure you want to delete \"%s\" service? (N/y)> ", COLOUR_RED, COLOUR_RESET, service);
+      switch (fgetc(stdin))
       {
-        /* application unlink <service> */
-        case 1:
+        case '1': case 'Y': case 'y':
         {
-          switch (ifdir("%s/%s", RUNIT_DEFAULT_SERVICE_PATH, service))
-          { case 0: fprintf(stderr, "%serror%s: Service already unlinked.\n", COLOUR_RED, COLOUR_RESET); return 1; default: break; }
-
-          rm("%s/%s", RUNIT_DEFAULT_SERVICE_PATH, service);
-          printf("%s%s%s: Unlinked service \"%s\".\n", COLOUR_GREEN, appname, COLOUR_RESET, service);
-        } return 0;
-
-        /* application link <service> */
-        case 2:
-        {
-          switch (ifdir("%s/%s", RUNIT_DEFAULT_SERVICE_PATH, service))
-          { case 1: fprintf(stderr, "%serror%s: Service already linked.\n", COLOUR_RED, COLOUR_RESET); return 1; default: break; }
-
-          link_service(service);
-          touch("%s/%s/down", RUNIT_DEFAULT_SERVICE_PATH, service);
-          printf("%s%s%s: Linked service \"%s\".\n", COLOUR_GREEN, appname, COLOUR_RESET, service);
-        } return 0;
-
-        /* application disable <service> */
-        case 3:
-        {
-          switch (ifdir("%s/%s", RUNIT_DEFAULT_SERVICE_PATH, service) )
-          { case 0: fprintf(stderr, "%serror%s: Service not linked.\n", COLOUR_RED, COLOUR_RESET); return 1; default: break; }
-          switch (iffile("%s/%s/down", RUNIT_DEFAULT_SERVICE_PATH, service))
-          { case 1: fprintf(stderr, "%serror%s: Service already disabled.\n", COLOUR_RED, COLOUR_RESET); return 1; default: break; }
-
-          touch("%s/%s/down", RUNIT_DEFAULT_SERVICE_PATH, service);
-          printf("%s%s%s: Disabled service \"%s\" from boot.\n", COLOUR_GREEN, appname, COLOUR_RESET, service);
-        } return 0;
-
-        /* application enable <service> */
-        case 4:
-        {
-          switch (ifdir("%s/%s", RUNIT_DEFAULT_SERVICE_PATH, service))
-          { case 0: fprintf(stderr, "%serror%s: Service not linked.\n", COLOUR_RED, COLOUR_RESET); return 1; default: break; }
-          switch (iffile("%s/%s/down", RUNIT_DEFAULT_SERVICE_PATH, service))
-          { case 0: fprintf(stderr, "%serror%s: Service already enabled.\n", COLOUR_RED, COLOUR_RESET); return 1; default: break; }
-
-          rm("%s/%s/down", RUNIT_DEFAULT_SERVICE_PATH, service);
-          printf("%s%s%s: Enabled service \"%s\" from boot.\n", COLOUR_GREEN, appname, COLOUR_RESET, service);
-        } return 0;
-
-        /* application status/stop/restart/start <service> */
-        case 5: case 6: case 7: case 8:
-        {
-          exec("sv '%s' '%s'", mode, service);
-        } return 0;
-
-        /* application purge <service> */
-        case 9:
-        {
-          printf("%sFAIL SAFE SECURITY%s: Are you sure you want to delete \"%s\" service? (N/y)> ", COLOUR_RED, COLOUR_RESET, service);
-          switch (fgetc(stdin))
-          {
-            case '1': case 'Y': case 'y':
-            {
-              rm("%s/%s", RUNIT_LOADED_SERVICE_PATH, service);
-              rm("%s/%s", RUNIT_DEFAULT_SERVICE_PATH, service);
-              rm("%s/%s", RUNIT_AVAILABLE_SERVICES, service);
-              return 0;
-            } break;
-            default: return 1;
-          }
+          rm(strformat("%s/%s", RUNIT_LOADED_SERVICE_PATH, service));
+          rm(strformat("%s/%s", RUNIT_DEFAULT_SERVICE_PATH, service));
+          rm(strformat("%s/%s", RUNIT_AVAILABLE_SERVICES, service));
         } break;
-
-        /* application enabled <service> */
-        case 11:
-        {
-          switch (ifdir("%s/%s", RUNIT_DEFAULT_SERVICE_PATH, service))
-          { case 0: fprintf(stderr, "%serror%s: Service not linked.\n", COLOUR_RED, COLOUR_RESET); return 1; default: break; }
-          switch (iffile("%s/%s/down", RUNIT_DEFAULT_SERVICE_PATH, service))
-          { case 1: fprintf(stderr, "%serror%s: Service not enabled.\n", COLOUR_RED, COLOUR_RESET); return 1; default: break; }
-
-          printf("%s%s%s: Service is enabled.\n", COLOUR_GREEN, appname, COLOUR_RESET);
-        } return 0;
-        default: return print_usage();
+        default: return 1;
       }
     } break;
+    case MODE_LIST:
+    {
+      exec(strformat("ls '%s'", RUNIT_AVAILABLE_SERVICES));
+    } break;
+    case MODE_ENABLED:
+    {
+      if (argc > 2)
+      {
+        if (ifdir(strformat("%s/%s", RUNIT_DEFAULT_SERVICE_PATH, service)) == true)
+        { errprintf("Service not linked."); return 1; }
+        if (iffile(strformat("%s/%s/down", RUNIT_DEFAULT_SERVICE_PATH, service)) == false)
+        { errprintf("Service not enabled."); return 1; }
+
+        printf("%s%s%s: Service is enabled.\n", COLOUR_GREEN, appname, COLOUR_RESET);
+        return 0;
+      }
+
+      exec(strformat(
+        "printf \"\033[34m\"; \
+        cd %s && ls -d */ | grep -v \"$(dirname $(ls -d */down))\" | sed \'s/\\///g\' | column -c $(tput cols); \
+        printf \"\033[0m\"", RUNIT_DEFAULT_SERVICE_PATH
+      ));
+    } break;
+    case MODE_JOURNAL:
+    {
+      FILE* journal = fopen("/var/log/runit-journal.log", "r");
+      if (journal == NULL)
+      { errprintf("Could not read the kernel logs."); return 1; }
+
+      while (feof(journal) == 0)
+      { printf("%c", fgetc(journal)); }
+
+      fclose(journal);
+    } break;
+    default: return print_usage();
   }
 
   return 0;
