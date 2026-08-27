@@ -30,20 +30,19 @@ Installation
 - C:
 
 Compile the code:
-```shell
+```sh
 make BUILD_TYPE=Release
 ```
 
 Give yourself `root` privileges.
 
-Copy the binary to the system's binary directory:
-```shell
-cp bin/runit-service /usr/bin
+Install the binary and the service on system:
+```sh
+make INSTALL_PREFIX=/usr install
 ```
 
-Copy the `runit-journal` service to runit's service directory and start it:
-```shell
-cp -r service/runit-journal /etc/runit/sv
+Start `runit-journal` service:
+```sh
 runit-service link runit-journal
 runit-service enable runit-journal
 runit-service start runit-journal
@@ -54,12 +53,12 @@ runit-service start runit-journal
 Give yourself `root` privileges and run these instructions.
 
 Set mode to `rwxr-xr-x` or `0755`:
-```shell
+```sh
 chmod 0755 runit-service.sh
 ```
 
 Move it to a `bin` folder. Preferably along runit scripts:
-```shell
+```sh
 cp runit-service.sh /usr/bin/runit-service
 ```
 

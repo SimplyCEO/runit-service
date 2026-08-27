@@ -26,7 +26,7 @@ rm(const char* path)
 bool
 touch(const char* path)
 {
-  FILE *stream = fopen(path, "wb");
+  FILE* stream = fopen(path, "wb");
   if (stream == NULL)
   { return false; }
   fclose(stream);

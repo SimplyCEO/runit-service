@@ -3,10 +3,84 @@
 #include <string.h>
 #include <sys/stat.h>
 
-#include "toolbox.h"
+#include "types.h"
+
+#if (__STDC_VERSION__ < 199901L) && !defined(__cplusplus)
+int32_t
+_vsprintf(char* src, const char* format, va_list ap)
+{
+  int count = 0;
+
+  while (*format != '\0')
+  {
+    switch (*format)
+    {
+      case '%':
+      {
+        format++;
+        switch (*format)
+        {
+          case 'c':
+          {
+            if (src != NULL)
+            { *src++ = (char)va_arg(ap, int); }
+            count++;
+          } break;
+          case 's':
+          {
+            char* s = va_arg(ap, char*);
+            int s_len = 0; for (; *s != '\0'; s++)
+            {
+              if (src != NULL)
+              { *src++ = *s; }
+              s_len++;
+            }
+            count += s_len;
+          } break;
+          case 'd':
+          {
+            int num = va_arg(ap, int);
+            char buffer[20] = {0};
+            int len = sprintf(buffer, "%d", num);
+            int i = 0; for (; i < len; i++)
+            {
+              if (src != NULL)
+              { *src++ = buffer[i]; }
+              count++;
+            }
+          } break;
+          case '%':
+          {
+            if (src != NULL)
+            { *src++ = '%'; }
+            count++;
+          } break;
+          default:
+          {
+            if (src != NULL)
+            { *src++ = *format; }
+            count++;
+          } break;
+        }
+      } break;
+      default:
+      {
+        if (src != NULL)
+        { *src++ = *format; }
+        count++;
+      } break;
+    }
+    format++;
+  }
+  if (src != NULL)
+  { *src = '\0'; }
+
+  return count;
+}
+#endif
 
 char*
-strformat(const char* format, ...)
+strfmt(const char* format, ...)
 {
   va_list args;
   va_start(args, format);
@@ -21,7 +95,8 @@ strformat(const char* format, ...)
 uint8_t
 mstrncmp(const char* target, const char* entrances[], uint8_t c)
 {
-  uint8_t i = 0; for (; i<c; i++)
+  int32_t i = 0;
+  for (; i<c; i++)
   {
     if (strncmp(target, entrances[i], 8) == 0)
     { return i+1; }
@@ -32,7 +107,7 @@ mstrncmp(const char* target, const char* entrances[], uint8_t c)
 bool
 iffile(const char* path)
 {
-  FILE *stream = fopen(path, "rb");
+  FILE* stream = fopen(path, "rb");
   if (stream == NULL)
   { return true; }
   fclose(stream);
